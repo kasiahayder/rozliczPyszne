@@ -4,14 +4,53 @@ const kosztDostawyInput = document.getElementById('kosztDostawy');
 const obliczBtn = document.getElementById('obliczBtn');
 const listaWynikow = document.getElementById('listaWynikow');
 const infoZamawiajacy = document.getElementById('infoZamawiajacy');
-const wartoscCalkowitaElement = document.getElementById('wartoscCalkowita'); // Pobierz nowy element
+const wartoscCalkowitaElement = document.getElementById('wartoscCalkowita');
+const wynikiDiv = document.getElementById('wyniki');
+const formularzZamowienia = document.getElementById('formularzZamowienia'); // Fieldset
+const przyciskiAkcjiDiv = document.getElementById('przyciskiAkcji');
+const kontynuujBtn = document.getElementById('kontynuujBtn');
+const wyczyscBtn = document.getElementById('wyczyscBtn');
 
 const BUDZET_NA_OSOBE = 25.00;
+const MAX_OSOBY = 10; // Maksymalna liczba osób
+
+// --- Funkcje pomocnicze do zarządzania stanem formularza ---
+
+function zablokujFormularz() {
+    formularzZamowienia.disabled = true;
+    obliczBtn.disabled = true;
+    przyciskiAkcjiDiv.style.display = 'flex'; // Pokaż przyciski akcji
+    wynikiDiv.style.display = 'block'; // Pokaż wyniki
+}
+
+function odblokujFormularz() {
+    formularzZamowienia.disabled = false;
+    obliczBtn.disabled = false;
+    przyciskiAkcjiDiv.style.display = 'none'; // Ukryj przyciski akcji
+    // Nie ukrywamy wyników, aby można było je zobaczyć podczas edycji
+}
+
+function wyczyscWyniki() {
+    listaWynikow.innerHTML = '';
+    infoZamawiajacy.textContent = '';
+    wartoscCalkowitaElement.textContent = '';
+    wynikiDiv.style.display = 'none'; // Ukryj sekcję wyników
+}
+
+function resetujFormularz() {
+    liczbaOsobInput.value = '1';
+    kosztDostawyInput.value = '0';
+    generujPolaKwot(1); // Generuj pola dla 1 osoby
+    wyczyscWyniki();
+    odblokujFormularz();
+}
+
+// --- Główna logika aplikacji ---
 
 // Funkcja do generowania pól na imiona i kwoty zamówień
 function generujPolaKwot(liczbaOsob) {
-    kwotyZamowienContainer.innerHTML = '';
-    if (liczbaOsob < 1) return;
+    kwotyZamowienContainer.innerHTML = ''; // Wyczyść poprzednie pola
+    if (liczbaOsob < 1 || liczbaOsob > MAX_OSOBY) return; // Sprawdzenie limitu
 
     const tytul = document.createElement('h3');
     tytul.textContent = 'Dane zamówień:';
@@ -35,7 +74,7 @@ function generujPolaKwot(liczbaOsob) {
         inputKwota.setAttribute('type', 'number');
         inputKwota.setAttribute('id', `kwota${i}`);
         inputKwota.setAttribute('min', '0');
-        inputKwota.setAttribute('step', '0.01');
+        inputKwota.setAttribute('step', '0.10'); // Zmieniony step
         inputKwota.setAttribute('required', 'true');
         inputKwota.setAttribute('placeholder', 'Kwota (zł)');
         inputKwota.classList.add('kwota-zamowienia');
@@ -47,99 +86,99 @@ function generujPolaKwot(liczbaOsob) {
     }
 }
 
-// Funkcja obliczająca rozliczenie
+// Funkcja obliczająca rozliczenie (NOWY ALGORYTM)
 function obliczRozliczenie() {
-    listaWynikow.innerHTML = '';
-    infoZamawiajacy.textContent = '';
-    wartoscCalkowitaElement.textContent = ''; // Wyczyść pole wartości całkowitej
+    wyczyscWyniki(); // Wyczyść poprzednie wyniki przed nowym obliczeniem
 
     const liczbaOsob = parseInt(liczbaOsobInput.value, 10);
-    let kosztDostawy = parseFloat(kosztDostawyInput.value) || 0;
+    const kosztDostawy = parseFloat(kosztDostawyInput.value) || 0;
 
-    if (isNaN(liczbaOsob) || liczbaOsob < 1) {
-        alert("Podaj poprawną liczbę osób.");
+    // --- Walidacja podstawowych danych ---
+    if (isNaN(liczbaOsob) || liczbaOsob < 1 || liczbaOsob > MAX_OSOBY) {
+        alert(`Podaj poprawną liczbę osób (od 1 do ${MAX_OSOBY}).`);
+        liczbaOsobInput.focus(); // Ustaw fokus na błędnym polu
         return;
     }
     if (isNaN(kosztDostawy) || kosztDostawy < 0) {
-        alert("Podaj poprawny koszt dostawy.");
+        alert("Podaj poprawny koszt dostawy (nieujemny).");
+        kosztDostawyInput.focus();
         return;
     }
 
+    // --- Odczyt i walidacja danych zamówień ---
     const kwotyZamowienInputs = document.querySelectorAll('.kwota-zamowienia');
     const imionaInputs = document.querySelectorAll('.imie-osoby');
     const zamowienia = [];
-    let sumaZamowien = 0; // Zmienna na sumę kwot samych zamówień
+    let sumaKwotZamowien = 0;
     let poprawneDane = true;
 
     for (let i = 0; i < kwotyZamowienInputs.length; i++) {
         const kwotaInput = kwotyZamowienInputs[i];
         const imieInput = imionaInputs[i];
         const kwota = parseFloat(kwotaInput.value);
-        const imie = imieInput.value.trim();
+        const imie = imieInput.value.trim() || `Osoba ${i + 1}`; // Domyślne imię
+
+        // Resetuj styl błędu
+        kwotaInput.style.border = '1px solid #ccc';
 
         if (isNaN(kwota) || kwota < 0) {
-            alert(`Podaj poprawną kwotę zamówienia dla Osoby ${i + 1}.`);
+            alert(`Podaj poprawną, nieujemną kwotę zamówienia dla ${imie}.`);
             kwotaInput.style.border = '1px solid red';
+            kwotaInput.focus();
             poprawneDane = false;
-        } else {
-            kwotaInput.style.border = '1px solid #ccc';
+            break; // Przerwij pętlę przy pierwszym błędzie
         }
 
-        const kwotaDoSumy = isNaN(kwota) || kwota < 0 ? 0 : kwota; // Użyj 0 jeśli błędna kwota
         zamowienia.push({
             id: i + 1,
-            imie: imie || `Osoba ${i + 1}`,
-            kwota: kwotaDoSumy
+            imie: imie,
+            kwota: kwota
         });
-        // Sumuj tylko poprawne, nieujemne kwoty
-        if (!isNaN(kwota) && kwota >= 0) {
-             sumaZamowien += kwota;
-        }
+        sumaKwotZamowien += kwota;
     }
 
     if (!poprawneDane) {
-        return;
+        return; // Zakończ, jeśli dane są niepoprawne
     }
 
-    // Krok 1: Oblicz, ile z budżetów pokrywa koszt dostawy
-    let wplataNaDostaweZBudzetow = 0;
-    zamowienia.forEach(zam => {
-        if (zam.kwota < BUDZET_NA_OSOBE) {
-            const pozostaloZBudzetu = BUDZET_NA_OSOBE - zam.kwota;
-            const dostawaDoPokrycia = Math.max(0, kosztDostawy - wplataNaDostaweZBudzetow);
-            const wplata = Math.min(pozostaloZBudzetu, dostawaDoPokrycia);
-            wplataNaDostaweZBudzetow += wplata;
-        }
-    });
-
-    // Krok 2: Oblicz pozostały koszt dostawy
-    const pozostalyKosztDostawy = Math.max(0, kosztDostawy - wplataNaDostaweZBudzetow);
-
-    // Krok 3: Podziel pozostały koszt dostawy równo między wszystkich
-    const czescDostawyNaOsobe = liczbaOsob > 0 ? pozostalyKosztDostawy / liczbaOsob : 0;
-
-    // Krok 4: Oblicz, ile każda osoba musi zwrócić zamawiającemu
+    // --- Nowy Algorytm Rozliczania ---
+    const calkowityKoszt = sumaKwotZamowien + kosztDostawy;
+    const czescDostawyNaOsobe = liczbaOsob > 0 ? kosztDostawy / liczbaOsob : 0;
     let sumaDoZwrotuDlaZamawiajacego = 0;
 
     zamowienia.forEach((zam) => {
         const osobaId = zam.id;
         const imieOsoby = zam.imie;
         const kwotaZamowienia = zam.kwota;
-        const przekroczenieBudzetu = Math.max(0, kwotaZamowienia - BUDZET_NA_OSOBE);
-        const kwotaDoZaplaty = przekroczenieBudzetu + czescDostawyNaOsobe;
+
+        // Oblicz "sprawiedliwy udział" tej osoby w całkowitym koszcie
+        const sprawiedliwyUdzial = kwotaZamowienia + czescDostawyNaOsobe;
+
+        // Ile osoba musi dopłacić ponad swój budżet 25 zł
+        const kwotaDoZaplatyPonadBudzet = Math.max(0, sprawiedliwyUdzial - BUDZET_NA_OSOBE);
 
         const li = document.createElement('li');
-        if (osobaId === 1) {
+        let opis = `${imieOsoby}: Zamówienie: ${kwotaZamowienia.toFixed(2)} zł. Udział w dostawie: ${czescDostawyNaOsobe.toFixed(2)} zł. Łączny udział: ${sprawiedliwyUdzial.toFixed(2)} zł.`;
+
+        if (osobaId === 1) { // Zamawiający
             li.classList.add('zamawiajacy');
-            li.textContent = `${imieOsoby} (Zamawiający): Zamówienie: ${kwotaZamowienia.toFixed(2)} zł. Pokrywa swoje przekroczenie (${przekroczenieBudzetu.toFixed(2)} zł) i swoją część dostawy (${czescDostawyNaOsobe.toFixed(2)} zł).`;
-        } else {
-            if (kwotaDoZaplaty > 0.001) {
-                 li.textContent = `${imieOsoby}: Zamówienie: ${kwotaZamowienia.toFixed(2)} zł. Zwraca zamawiającemu: ${kwotaDoZaplaty.toFixed(2)} zł (Przekroczenie: ${przekroczenieBudzetu.toFixed(2)} zł + Dostawa: ${czescDostawyNaOsobe.toFixed(2)} zł).`;
-                 sumaDoZwrotuDlaZamawiajacego += kwotaDoZaplaty;
+            if (kwotaDoZaplatyPonadBudzet > 0.001) {
+                opis += ` Pokrywa ${kwotaDoZaplatyPonadBudzet.toFixed(2)} zł ponad budżet.`;
             } else {
-                 li.textContent = `${imieOsoby}: Zamówienie: ${kwotaZamowienia.toFixed(2)} zł. Nie musi nic zwracać (pokrywa tylko swoją część dostawy ${czescDostawyNaOsobe.toFixed(2)} zł z budżetu lub zamówienia).`;
+                const niewykorzystanyBudzet = Math.max(0, BUDZET_NA_OSOBE - sprawiedliwyUdzial);
+                opis += ` Mieści się w budżecie (pozostaje ${niewykorzystanyBudzet.toFixed(2)} zł z budżetu).`;
+            }
+        } else { // Pozostałe osoby
+            if (kwotaDoZaplatyPonadBudzet > 0.001) {
+                li.classList.add('placi'); // Dodaj klasę dla osób płacących
+                opis += ` Zwraca zamawiającemu: ${kwotaDoZaplatyPonadBudzet.toFixed(2)} zł.`;
+                sumaDoZwrotuDlaZamawiajacego += kwotaDoZaplatyPonadBudzet;
+            } else {
+                const niewykorzystanyBudzet = Math.max(0, BUDZET_NA_OSOBE - sprawiedliwyUdzial);
+                opis += ` Nie musi nic zwracać (mieści się w budżecie, pozostaje ${niewykorzystanyBudzet.toFixed(2)} zł).`;
             }
         }
+        li.textContent = opis;
         listaWynikow.appendChild(li);
     });
 
@@ -151,20 +190,44 @@ function obliczRozliczenie() {
         infoZamawiajacy.textContent = `${imieZamawiajacego} (Osoba 1) nie oczekuje zwrotów od pozostałych osób.`;
     }
 
-    // DODANE: Obliczenie i wyświetlenie wartości całkowitej
-    const wartoscCalkowita = sumaZamowien + kosztDostawy;
-    wartoscCalkowitaElement.textContent = `Całkowita wartość zamówienia (jedzenie + dostawa): ${wartoscCalkowita.toFixed(2)} zł`;
+    // Wyświetlenie wartości całkowitej
+    wartoscCalkowitaElement.textContent = `Całkowita wartość zamówienia (jedzenie + dostawa): ${calkowityKoszt.toFixed(2)} zł`;
 
+    // Zablokuj formularz po poprawnym obliczeniu
+    zablokujFormularz();
 }
 
-// Nasłuchiwanie zmiany liczby osób
+// --- Nasłuchiwanie zdarzeń ---
+
+// Zmiana liczby osób
 liczbaOsobInput.addEventListener('input', () => {
-    const liczba = parseInt(liczbaOsobInput.value, 10);
-    generujPolaKwot(liczba);
+    let liczba = parseInt(liczbaOsobInput.value, 10);
+    // Ograniczenie do MAX_OSOBY
+    if (liczba > MAX_OSOBY) {
+        liczba = MAX_OSOBY;
+        liczbaOsobInput.value = MAX_OSOBY;
+        alert(`Maksymalna liczba osób to ${MAX_OSOBY}.`);
+    }
+     if (liczba < 1 && liczbaOsobInput.value !== '') { // Zapobiegaj ujemnym lub zeru
+        liczba = 1;
+        liczbaOsobInput.value = 1;
+    }
+    if (!isNaN(liczba)) {
+        generujPolaKwot(liczba);
+        wyczyscWyniki(); // Wyczyść wyniki przy zmianie liczby osób
+        odblokujFormularz(); // Upewnij się, że formularz jest odblokowany
+    }
 });
 
-// Nasłuchiwanie kliknięcia przycisku obliczania
+// Kliknięcie przycisku obliczania
 obliczBtn.addEventListener('click', obliczRozliczenie);
 
+// Kliknięcie przycisku "Kontynuuj edycję"
+kontynuujBtn.addEventListener('click', odblokujFormularz);
+
+// Kliknięcie przycisku "Wyczyść i zacznij od nowa"
+wyczyscBtn.addEventListener('click', resetujFormularz);
+
+// --- Inicjalizacja ---
 // Wygeneruj pola dla domyślnej wartości przy załadowaniu strony
 generujPolaKwot(parseInt(liczbaOsobInput.value, 10));

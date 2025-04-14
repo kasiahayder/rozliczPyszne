@@ -19,6 +19,18 @@ h1, h2 {
     color: #333;
 }
 
+/* Dodane style dla fieldset */
+#formularzZamowienia {
+    border: none; /* Usuwa domyślną ramkę fieldset */
+    padding: 0;
+    margin: 0;
+}
+
+#formularzZamowienia:disabled {
+    opacity: 0.6; /* Lekkie przygaszenie zablokowanego formularza */
+}
+
+
 .input-group {
     margin-bottom: 15px;
 }
@@ -29,30 +41,70 @@ h1, h2 {
     color: #555;
 }
 
-.input-group input[type="number"] {
+.input-group input[type="number"],
+.osoba-zamowienie-group input[type="text"],
+.osoba-zamowienie-group input[type="number"] {
     width: 100%;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+    transition: background-color 0.3s ease; /* Płynne przejście dla stanu disabled */
 }
+
+/* Styl dla zablokowanych inputów */
+input:disabled {
+    background-color: #eee;
+    cursor: not-allowed;
+}
+
 
 button {
     display: block;
     width: 100%;
-    padding: 10px;
+    padding: 10px 15px;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
+    margin-top: 10px; /* Zmniejszony margines górny */
+    transition: background-color 0.3s ease, opacity 0.3s ease; /* Płynne przejście dla stanu disabled */
+}
+
+button:hover:not(:disabled) { /* Hover tylko dla aktywnych przycisków */
+    background-color: #0056b3;
+}
+
+/* Styl dla zablokowanych przycisków */
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Style dla grupy przycisków po obliczeniu */
+.button-group.post-calculate {
+    display: flex; /* Ustawia przyciski obok siebie */
+    gap: 10px; /* Odstęp między przyciskami */
     margin-top: 20px;
 }
 
-button:hover {
-    background-color: #0056b3;
+.button-group.post-calculate button {
+    flex: 1; /* Rozciąga przyciski, aby wypełniły dostępną przestrzeń */
+    margin-top: 0; /* Usuwa margines górny dla przycisków w grupie */
 }
+
+/* Styl dla przycisku drugorzędnego (np. Wyczyść) */
+button.secondary {
+    background-color: #6c757d;
+}
+
+button.secondary:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
 
 #wyniki {
     margin-top: 20px;
@@ -73,7 +125,11 @@ button:hover {
 }
 
 #listaWynikow li.zamawiajacy {
-    background-color: #d4edda;
+    background-color: #d4edda; /* Zielony dla zamawiającego */
+}
+
+#listaWynikow li.placi {
+    background-color: #f8d7da; /* Czerwony dla płacących */
 }
 
 #infoZamawiajacy {
@@ -103,15 +159,6 @@ button:hover {
     color: #555;
 }
 
-.osoba-zamowienie-group input[type="text"],
-.osoba-zamowienie-group input[type="number"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
 .osoba-zamowienie-group input[type="text"] {
     grid-column: 2 / 3;
 }
@@ -120,13 +167,12 @@ button:hover {
     grid-column: 3 / 4;
 }
 
-/* DODANY STYL DLA WARTOŚCI CAŁKOWITEJ */
 #wartoscCalkowita {
     margin-top: 20px;
     padding-top: 15px;
-    border-top: 1px dashed #ccc; /* Linia oddzielająca */
+    border-top: 1px dashed #ccc;
     text-align: center;
     font-weight: bold;
     color: #555;
-    font-size: 1.05em; /* Lekko większa czcionka */
+    font-size: 1.05em;
 }
