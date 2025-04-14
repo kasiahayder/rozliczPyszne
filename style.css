@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-    max-width: 700px;
+    max-width: 800px; /* Zwiększona szerokość dla dodatkowej kolumny */
     margin: auto;
     background: #fff;
     padding: 20px;
@@ -19,17 +19,15 @@ h1, h2 {
     color: #333;
 }
 
-/* Dodane style dla fieldset */
 #formularzZamowienia {
-    border: none; /* Usuwa domyślną ramkę fieldset */
+    border: none;
     padding: 0;
     margin: 0;
 }
 
 #formularzZamowienia:disabled {
-    opacity: 0.6; /* Lekkie przygaszenie zablokowanego formularza */
+    opacity: 0.6;
 }
-
 
 .input-group {
     margin-bottom: 15px;
@@ -41,6 +39,7 @@ h1, h2 {
     color: #555;
 }
 
+/* Wspólne style dla inputów */
 .input-group input[type="number"],
 .osoba-zamowienie-group input[type="text"],
 .osoba-zamowienie-group input[type="number"] {
@@ -49,15 +48,13 @@ h1, h2 {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-    transition: background-color 0.3s ease; /* Płynne przejście dla stanu disabled */
+    transition: background-color 0.3s ease, border-color 0.3s ease; /* Dodano przejście dla ramki */
 }
 
-/* Styl dla zablokowanych inputów */
 input:disabled {
     background-color: #eee;
     cursor: not-allowed;
 }
-
 
 button {
     display: block;
@@ -69,34 +66,31 @@ button {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    margin-top: 10px; /* Zmniejszony margines górny */
-    transition: background-color 0.3s ease, opacity 0.3s ease; /* Płynne przejście dla stanu disabled */
+    margin-top: 10px;
+    transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
-button:hover:not(:disabled) { /* Hover tylko dla aktywnych przycisków */
+button:hover:not(:disabled) {
     background-color: #0056b3;
 }
 
-/* Styl dla zablokowanych przycisków */
 button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
     opacity: 0.7;
 }
 
-/* Style dla grupy przycisków po obliczeniu */
 .button-group.post-calculate {
-    display: flex; /* Ustawia przyciski obok siebie */
-    gap: 10px; /* Odstęp między przyciskami */
+    display: flex;
+    gap: 10px;
     margin-top: 20px;
 }
 
 .button-group.post-calculate button {
-    flex: 1; /* Rozciąga przyciski, aby wypełniły dostępną przestrzeń */
-    margin-top: 0; /* Usuwa margines górny dla przycisków w grupie */
+    flex: 1;
+    margin-top: 0;
 }
 
-/* Styl dla przycisku drugorzędnego (np. Wyczyść) */
 button.secondary {
     background-color: #6c757d;
 }
@@ -105,12 +99,20 @@ button.secondary:hover:not(:disabled) {
     background-color: #5a6268;
 }
 
-
 #wyniki {
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid #eee;
 }
+
+/* Dodany styl dla informacji o saldzie */
+#dostepneSaldoInfo {
+    text-align: center;
+    margin-bottom: 15px;
+    font-style: italic;
+    color: #555;
+}
+
 
 #listaWynikow {
     list-style: none;
@@ -122,14 +124,15 @@ button.secondary:hover:not(:disabled) {
     margin-bottom: 8px;
     padding: 10px;
     border-radius: 4px;
+    font-size: 0.95em; /* Lekko zmniejszona czcionka dla czytelności */
 }
 
 #listaWynikow li.zamawiajacy {
-    background-color: #d4edda; /* Zielony dla zamawiającego */
+    background-color: #d4edda;
 }
 
 #listaWynikow li.placi {
-    background-color: #f8d7da; /* Czerwony dla płacących */
+    background-color: #f8d7da;
 }
 
 #infoZamawiajacy {
@@ -142,11 +145,14 @@ button.secondary:hover:not(:disabled) {
 #kwotyZamowienContainer h3 {
     margin-bottom: 10px;
     color: #333;
+    text-align: center; /* Wyśrodkowanie nagłówka */
+    grid-column: 1 / -1; /* Rozciągnięcie na wszystkie kolumny siatki */
 }
 
+/* Zmieniony grid dla 4 kolumn: Etykieta, Imię, Kwota, Maks. Wkład */
 .osoba-zamowienie-group {
     display: grid;
-    grid-template-columns: auto 1fr 1fr;
+    grid-template-columns: auto 1fr auto auto; /* Etykieta, Imię (flex), Kwota (auto), Wkład (auto) */
     gap: 10px;
     align-items: center;
     margin-bottom: 10px;
@@ -157,15 +163,28 @@ button.secondary:hover:not(:disabled) {
     margin-bottom: 0;
     white-space: nowrap;
     color: #555;
+    font-size: 0.9em; /* Mniejsza etykieta */
 }
 
 .osoba-zamowienie-group input[type="text"] {
-    grid-column: 2 / 3;
+    grid-column: 2 / 3; /* Imię */
 }
 
-.osoba-zamowienie-group input[type="number"] {
-    grid-column: 3 / 4;
+.osoba-zamowienie-group input.kwota-zamowienia {
+    grid-column: 3 / 4; /* Kwota zamówienia */
+    min-width: 80px; /* Minimalna szerokość */
 }
+
+.osoba-zamowienie-group input.maks-wklad {
+    grid-column: 4 / 5; /* Maksymalny wkład */
+    min-width: 80px; /* Minimalna szerokość */
+}
+
+/* Dodajemy placeholder dla nowego pola */
+.osoba-zamowienie-group input.maks-wklad::placeholder {
+    font-size: 0.9em; /* Mniejszy placeholder */
+}
+
 
 #wartoscCalkowita {
     margin-top: 20px;
